@@ -41,7 +41,7 @@ def star_nfa(nfa):
     return NFA(start, accept)
 
 
-# ---------- INFIX → POSTFIX ----------
+# ---------- INFIX -> POSTFIX ----------
 def add_concat(regex):
     result = ""
     for i in range(len(regex)):
@@ -92,7 +92,7 @@ def infix_to_postfix(regex):
     return ''.join(output)
 
 
-# ---------- REGEX → NFA ----------
+# ---------- REGEX -> NFA ----------
 def regex_to_nfa(regex):
     stack = []
 
@@ -164,31 +164,34 @@ def generate_strings(alphabet, max_len):
             yield ''.join(p)
 
 
-# ---------- MAIN ----------
-regex = input("Enter Regular expression  ")
+# ---------- CLI ENTRY POINT ----------
+# Guarded behind __main__ so importing this module never triggers input().
+# Run `python nfa.py` directly to use the terminal interface.
+def _cli():
+    regex = input("Enter Regular expression  ")
 
-regex = add_concat(regex)
-postfix = infix_to_postfix(regex)
+    regex = add_concat(regex)
+    postfix = infix_to_postfix(regex)
+    print("Postfix:", postfix)
 
-print("Postfix:", postfix)
+    nfa = regex_to_nfa(postfix)
+    alphabet = sorted(set([c for c in regex if c.isalnum()]))
+    max_len = 5
 
-nfa = regex_to_nfa(postfix)
+    print("\n--- String Testing Table ---")
 
-alphabet = sorted(set([c for c in regex if c.isalnum()]))
+    accepted = []
+    rejected = []
 
-# 🔥 AUTO FIX: increase length dynamically
-max_len = 5
+    for s in generate_strings(alphabet, max_len):
+        if accepts(nfa, s):
+            accepted.append(s if s else "ε")
+        else:
+            rejected.append(s if s else "ε")
 
-print("\n--- String Testing Table ---")
+    print("\nAccepted:", accepted if accepted else "None (try larger max_len)")
+    print("Rejected:", rejected if rejected else "None")
 
-accepted = []
-rejected = []
 
-for s in generate_strings(alphabet, max_len):
-    if accepts(nfa, s):
-        accepted.append(s if s else "ε")
-    else:
-        rejected.append(s if s else "ε")
-
-print("\nAccepted:", accepted if accepted else "None (try larger max_len)")
-print("Rejected:", rejected if rejected else "None")
+if __name__ == "__main__":
+    _cli()

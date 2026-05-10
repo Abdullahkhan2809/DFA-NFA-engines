@@ -120,7 +120,7 @@ def print_transition_table(dfa):
         row = f"{marker + state.name:<10}"
         for sym in alphabet:
             target = state.transitions.get(sym, None)
-            row += f"{(target.name if target else '∅'):<10}"
+            row += f"{(target.name if target else 'phi'):<10}"
         print(row)
 
 
@@ -131,14 +131,9 @@ def generate_strings(alphabet, max_len):
             yield ''.join(p)
 
 
-# ---------- MAIN ----------
-# --- Import NFA builders from your nfa.py ---
-# Make sure nfa.py is in the same folder, then uncomment:
-# from nfa import add_concat, infix_to_postfix, regex_to_nfa
-
-# For standalone testing, paste the NFA functions here or import them.
-# Below assumes they are already imported/available.
-
+# ---------- CLI ENTRY POINT ----------
+# Only runs when you do `python dfa.py` directly. Importing this file from
+# Streamlit never triggers any prompts.
 def main():
     from nfa import add_concat, infix_to_postfix, regex_to_nfa
 
@@ -170,7 +165,7 @@ def main():
     rejected = []
 
     for s in generate_strings(alphabet, max_len):
-        label = s if s else "ε"
+        label = s if s else "epsilon"
         if dfa_accepts(dfa, s):
             accepted.append(label)
         else:
@@ -187,7 +182,7 @@ def main():
         if test == 'q':
             break
         result = dfa_accepts(dfa, test)
-        print(f"  '{test}' -> {'ACCEPTED ✓' if result else 'REJECTED ✗'}")
+        print(f"  '{test}' -> {'ACCEPTED' if result else 'REJECTED'}")
 
 
 if __name__ == "__main__":
