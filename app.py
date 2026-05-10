@@ -29,7 +29,7 @@ except ImportError:
 # ==========================================================
 st.set_page_config(
     page_title="Automata Lab",
-    page_icon="assets\logo.png",
+    page_icon="assets/logo.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
