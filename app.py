@@ -10,9 +10,9 @@ import graphviz
 
 # ---------- Local modules ----------
 try:
-    from core.autometa import nfa as nfa_mod
-    from core.autometa import dfa as dfa_mod
-    from core.autometa import tokenizer as tokenizer_mod
+    from core.automata import nfa as nfa_mod
+    from core.automata import dfa as dfa_mod
+    from core.automata import tokenizer as tokenizer_mod
 except ImportError:
     import nfa as nfa_mod
     import dfa as dfa_mod
@@ -306,14 +306,14 @@ with st.sidebar:
     with title_col:
         st.markdown(
             "<h1 style='color:#ffffff; letter-spacing:5px; margin-top:-20px; font-family:monospace;'>"
-            "AUTOMETA LAB</h1>",
+            "AUTOMATA LAB</h1>",
             unsafe_allow_html=True,
         )
 
     st.markdown("---")
     nav = st.radio(
         "Navigation",
-        ["Autometa Engine"],
+        ["Automata Engine"],
         label_visibility="collapsed",
     )
 
