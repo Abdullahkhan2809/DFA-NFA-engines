@@ -473,6 +473,7 @@ with col_result:
 
     st.markdown("### Test Suite")
 
+    # Default seed test cases — users can edit, add rows, or delete rows below
     if "test_cases" not in st.session_state:
         st.session_state.test_cases = pd.DataFrame({
             "Input":    ['""', "0", "01", "001", "10110", "1111", "0101", "@#$"],
@@ -481,19 +482,84 @@ with col_result:
             "Result":   ["—"] * 8,
         })
 
-    run_all = st.button("Run All Tests", use_container_width=True, type="primary")
+    # --- Editable test case table ---
+    st.markdown(
+        "<div class='section-label'>Edit Test Cases "
+        "<span style='text-transform:none; color:#6e7681;'>"
+        "(use \"\" for empty string)"
+        "</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    edited_tests = st.data_editor(
+        st.session_state.test_cases,
+        num_rows="dynamic",   # ← lets the user add/delete rows
+        use_container_width=True,
+        hide_index=True,
+        height=280,
+        column_config={
+            "Input": st.column_config.TextColumn(
+                "Input",
+                help='Input string to test. Use "" (two double quotes) for the empty string.',
+                required=True,
+            ),
+            "Expected": st.column_config.SelectboxColumn(
+                "Expected",
+                help="What you expect the DFA to do with this input.",
+                options=["ACCEPT", "REJECT", "ERROR"],
+                required=True,
+            ),
+            "Result": st.column_config.TextColumn(
+                "Result",
+                help="Filled in after running tests.",
+                disabled=True,   # users can't manually type results
+            ),
+        },
+        key="test_editor",
+    )
+
+    # Persist edits — but wipe stale Results when Input/Expected change
+    if not edited_tests.equals(st.session_state.test_cases):
+        edited_tests = edited_tests.copy()
+        # Fresh rows / edited rows get reset to "—"
+        for i, row in edited_tests.iterrows():
+            old = st.session_state.test_cases
+            if i >= len(old) or old.iloc[i]["Input"] != row["Input"] \
+                    or old.iloc[i]["Expected"] != row["Expected"]:
+                edited_tests.at[i, "Result"] = "—"
+        st.session_state.test_cases = edited_tests
+
+    # --- Action buttons ---
+    btn_col1, btn_col2 = st.columns(2)
+    with btn_col1:
+        run_all = st.button("▶ Run All Tests", use_container_width=True, type="primary")
+    with btn_col2:
+        reset = st.button("↺ Reset to Defaults", use_container_width=True)
+
+    if reset:
+        st.session_state.test_cases = pd.DataFrame({
+            "Input":    ['""', "0", "01", "001", "10110", "1111", "0101", "@#$"],
+            "Expected": ["REJECT", "REJECT", "ACCEPT", "ACCEPT", "ACCEPT",
+                         "REJECT", "ACCEPT", "ERROR"],
+            "Result":   ["—"] * 8,
+        })
+        st.rerun()
 
     if run_all and active_dfa is not None:
         results = []
         for inp in st.session_state.test_cases["Input"]:
-            test_str = "" if inp == '""' else str(inp)
+            # Treat the literal "" or empty cell as the empty string
+            inp_str = str(inp) if inp is not None else ""
+            test_str = "" if inp_str.strip() == '""' or inp_str.strip() == "" else inp_str
             if any(c not in active_dfa.alphabet for c in test_str):
                 results.append("ERROR")
                 continue
             v, _, _ = simulate_with_trace(active_dfa, test_str)
             results.append(v)
         st.session_state.test_cases["Result"] = results
+        st.rerun()   # refresh the table to show new results + colored rows
 
+    # --- Summary metrics ---
     passing = (st.session_state.test_cases["Expected"] ==
                st.session_state.test_cases["Result"]).sum()
     failing = ((st.session_state.test_cases["Expected"] !=
@@ -506,16 +572,24 @@ with col_result:
     m2.metric("Passing", int(passing))
     m3.metric("Failing", int(failing))
 
-    def color_rows(row):
-        if row["Result"] == "—":
-            return [""] * len(row)
-        if row["Expected"] == row["Result"]:
-            return ["background-color: rgba(40,167,69,0.15); color:#3fb950"] * len(row)
-        return ["background-color: rgba(220,53,69,0.15); color:#f85149"] * len(row)
+    # --- Color-coded read-only view (under the editor) ---
+    has_results = (st.session_state.test_cases["Result"] != "—").any()
+    if has_results:
+        st.markdown(
+            "<div class='section-label'>Results Summary</div>",
+            unsafe_allow_html=True,
+        )
 
-    st.dataframe(
-        st.session_state.test_cases.style.apply(color_rows, axis=1),
-        use_container_width=True,
-        hide_index=True,
-        height=320,
-    )
+        def color_rows(row):
+            if row["Result"] == "—":
+                return [""] * len(row)
+            if row["Expected"] == row["Result"]:
+                return ["background-color: rgba(40,167,69,0.15); color:#3fb950"] * len(row)
+            return ["background-color: rgba(220,53,69,0.15); color:#f85149"] * len(row)
+
+        st.dataframe(
+            st.session_state.test_cases.style.apply(color_rows, axis=1),
+            use_container_width=True,
+            hide_index=True,
+            height=240,
+        )
