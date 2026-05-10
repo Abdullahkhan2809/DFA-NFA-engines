@@ -317,6 +317,16 @@ with st.sidebar:
         label_visibility="collapsed",
     )
 
+    st.markdown("---")
+    st.markdown("<div class='section-label'>Contributors</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div style='font-family:monospace; font-size:0.85rem; color:#8b949e;'>"
+        "• Abdullah Khan<br>"
+        "• Muhammad Zain Khan<br>"
+        "• Rumman ul Haq<br>"
+        "• Ayoush Kishor"
+        "</div>",
+        unsafe_allow_html=True)
 
 # ==========================================================
 # HEADER
