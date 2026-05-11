@@ -1,6 +1,10 @@
 """
-Automata Lab — Streamlit UI
+Automata Lab — Streamlit UI (FIXED)
 Regex → NFA → DFA simulator with visualization, execution trace, and test suite.
+
+CHANGES:
+- Added separate NFA simulation with proper epsilon closure display
+- Initial step now shows only epsilon closure of start state (no input symbol)
 """
 
 import os
@@ -273,7 +277,7 @@ def render_nfa_graph(nfa_obj) -> graphviz.Digraph:
     return g
 
 
-def simulate_with_trace(dfa_obj, input_string: str):
+def simulate_dfa_with_trace(dfa_obj, input_string: str):
     """Run the DFA step-by-step. Returns (verdict, trace_df, final_state_name)."""
     if dfa_obj is None or dfa_obj.start is None:
         return "ERROR", pd.DataFrame(), None
@@ -292,6 +296,50 @@ def simulate_with_trace(dfa_obj, input_string: str):
 
     verdict = "ACCEPT" if current in dfa_obj.accept_states else "REJECT"
     return verdict, pd.DataFrame(rows), current.name
+
+
+def simulate_nfa_with_trace(nfa_obj, input_string: str):
+    """
+    Run the NFA step-by-step with epsilon closure visualization.
+    
+    FIXED: Initial step (Step 0) shows ONLY the epsilon closure of the start state,
+    with no input symbol processed yet.
+    
+    Returns (verdict, trace_df, final_states_str).
+    """
+    if nfa_obj is None or nfa_obj.start is None:
+        return "ERROR", pd.DataFrame(), None
+
+    # Step 0: Epsilon closure of start state only
+    initial_closure = nfa_mod.epsilon_closure([nfa_obj.start])
+    initial_states_str = "{" + ", ".join(s.name if hasattr(s, 'name') else str(i) 
+                                         for i, s in enumerate(sorted(initial_closure, 
+                                         key=lambda x: id(x)))) + "}"
+    
+    rows = [{"Step": 0, "Current States": initial_states_str, "Input": "ε", "→ Next States": initial_states_str}]
+    current_states = initial_closure
+
+    # Process each character
+    for i, ch in enumerate(input_string, start=1):
+        next_states = nfa_mod.move(current_states, ch)
+        
+        if not next_states:
+            next_states_str = "∅"
+            rows.append({"Step": i, "Current States": initial_states_str, "Input": ch, "→ Next States": next_states_str})
+            return "REJECT", pd.DataFrame(rows), "∅"
+        
+        next_states = nfa_mod.epsilon_closure(next_states)
+        next_states_str = "{" + ", ".join(s.name if hasattr(s, 'name') else str(j) 
+                                          for j, s in enumerate(sorted(next_states, 
+                                          key=lambda x: id(x)))) + "}"
+        
+        rows.append({"Step": i, "Current States": initial_states_str, "Input": ch, "→ Next States": next_states_str})
+        current_states = next_states
+        initial_states_str = next_states_str
+
+    # Check if any final state is in accept states
+    verdict = "ACCEPT" if nfa_obj.accept in current_states else "REJECT"
+    return verdict, pd.DataFrame(rows), initial_states_str
 
 
 # ==========================================================
@@ -437,9 +485,18 @@ with col_sim:
     st.markdown("<div class='section-label'>Execution Trace</div>", unsafe_allow_html=True)
 
     if run_clicked and active_dfa is not None:
-        verdict, trace_df, final_state = simulate_with_trace(active_dfa, input_string)
+        # Choose simulation based on whether we have a generated NFA or not
+        if st.session_state.nfa_machine is not None:
+            # Use NFA simulation with epsilon closure display
+            verdict, trace_df, final_states = simulate_nfa_with_trace(
+                st.session_state.nfa_machine, input_string
+            )
+        else:
+            # Use DFA simulation
+            verdict, trace_df, final_states = simulate_dfa_with_trace(active_dfa, input_string)
+        
         st.session_state.trace = trace_df
-        st.session_state.last_result = (verdict, input_string, final_state)
+        st.session_state.last_result = (verdict, input_string, final_states)
 
     if not st.session_state.trace.empty:
         st.dataframe(st.session_state.trace, use_container_width=True,
@@ -465,13 +522,13 @@ with col_result:
         if verdict == "ACCEPT":
             st.markdown(
                 f"<div class='result-accept'><h2>ACCEPTED</h2>"
-                f"<p>Input: {inp or 'ε'}  |  Final state: {final}</p></div>",
+                f"<p>Input: {inp or 'ε'}  |  Final states: {final}</p></div>",
                 unsafe_allow_html=True,
             )
         elif verdict == "REJECT":
             st.markdown(
                 f"<div class='result-reject'><h2>REJECTED</h2>"
-                f"<p>Input: {inp or 'ε'}  |  Final state: {final}</p></div>",
+                f"<p>Input: {inp or 'ε'}  |  Final states: {final}</p></div>",
                 unsafe_allow_html=True,
             )
         else:
@@ -564,7 +621,12 @@ with col_result:
             if any(c not in active_dfa.alphabet for c in test_str):
                 results.append("ERROR")
                 continue
-            v, _, _ = simulate_with_trace(active_dfa, test_str)
+            
+            # Use NFA simulation if available, otherwise DFA
+            if st.session_state.nfa_machine is not None:
+                v, _, _ = simulate_nfa_with_trace(st.session_state.nfa_machine, test_str)
+            else:
+                v, _, _ = simulate_dfa_with_trace(active_dfa, test_str)
             results.append(v)
         st.session_state.test_cases["Result"] = results
         st.rerun()   # refresh the table to show new results + colored rows
