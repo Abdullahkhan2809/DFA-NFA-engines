@@ -1,6 +1,28 @@
-# AUTOMETA LAB — DFA / NFA Engines
+<p align="center">
+  <img src="assets/logo.png" alt="AUTOMETA LAB logo" width="40"/>
+</p>
 
-A Python implementation of **Deterministic Finite Automata (DFA)** and **Nondeterministic Finite Automata (NFA)** with full regex-to-automaton compilation, subset construction conversion, and a Streamlit web UI.
+<h1 align="center">AUTOMETA LAB — DFA / NFA Engines</h1>
+
+<p align="center">
+  A Python implementation of Deterministic Finite Automata (DFA) and Nondeterministic Finite Automata (NFA) with full regex-to-automaton compilation, subset construction conversion, and a Streamlit web UI.
+</p>
+
+---
+
+## UI Preview
+
+<p align="center">
+  <img src="assets/Screenshot 2026-06-09 021228.png" alt="UI Screenshot 1" width="100%"/>
+</p>
+
+<p align="center">
+  <img src="assets/Screenshot 2026-06-09 021307.png" alt="UI Screenshot 2" width="100%"/>
+</p>
+
+<p align="center">
+  <img src="assets/Screenshot 2026-06-09 021329.png" alt="UI Screenshot 3" width="100%"/>
+</p>
 
 ---
 
@@ -12,7 +34,7 @@ A Python implementation of **Deterministic Finite Automata (DFA)** and **Nondete
 4. **Simulates both engines** — run strings directly against the NFA or the minimised DFA.
 5. **Generates and tests strings** — auto-enumerates all strings up to a configurable length and classifies each as accepted or rejected.
 6. **Displays a transition table** for the constructed DFA.
-7. **Streamlit UI** (`app.py`) — branded "AUTOMETA LAB" interface for interactive simulation.
+7. **Streamlit UI** (`app.py`) — branded AUTOMETA LAB interface for interactive simulation.
 
 ---
 
@@ -27,7 +49,10 @@ DFA-NFA-engines/
 ├── tokenizer.py    # Tokenizer utilities
 ├── utils.py        # Shared helper functions
 ├── assets/
-│   └── logo.png    # App logo
+│   ├── logo.png
+│   ├── Screenshot 2026-06-09 021228.png
+│   ├── Screenshot 2026-06-09 021307.png
+│   └── Screenshot 2026-06-09 021329.png
 └── tests/          # Test cases
 ```
 
@@ -58,14 +83,14 @@ dfa_accepts() / accepts()   ← simulation
 
 ## Supported Regex Operators
 
-| Operator | Meaning          | Example   |
-|----------|------------------|-----------|
-| `\|`     | Union / OR       | `a\|b`    |
-| `*`      | Kleene star      | `a*`      |
-| `+`      | One or more      | `a+`      |
-| `?`      | Zero or one      | `a?`      |
-| `()`     | Grouping         | `(ab)*`   |
-| implicit | Concatenation    | `ab` → `a.b` |
+| Operator | Meaning       | Example      |
+|----------|---------------|--------------|
+| `\|`     | Union / OR    | `a\|b`       |
+| `*`      | Kleene star   | `a*`         |
+| `+`      | One or more   | `a+`         |
+| `?`      | Zero or one   | `a?`         |
+| `()`     | Grouping      | `(ab)*`      |
+| implicit | Concatenation | `ab` → `a.b` |
 
 > Only alphanumeric characters are treated as symbols. The alphabet is inferred automatically from the regex.
 
